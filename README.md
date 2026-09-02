@@ -1,112 +1,253 @@
-# TMSL AI — College Knowledge Engine 🎓❄️
+<div align="center">
 
-![Hackathon](https://img.shields.io/badge/MLH-Hack_Days-blue?style=for-the-badge)
-![Snowflake](https://img.shields.io/badge/Snowflake-Cortex_AI-29B5E8?style=for-the-badge&logo=snowflake&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-Ready-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+# 🎓 TMSL AI — College Knowledge Engine ❄️
+### Intelligent Campus Assistant Powered by Snowflake Data Cloud & Groq LPU Inference
 
-**TMSL AI** is an intelligent, full-stack college knowledge assistant engineered specifically for the **MLH Hack Days — Best Use of Snowflake** challenge.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-ai--hackathon--blush.vercel.app-29B5E8?style=for-the-badge&logo=vercel&logoColor=white)](https://ai-hackathon-blush.vercel.app/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/omjeesingh882-bit/AI_HACKATHON.git)
+[![MLH Hack Days](https://img.shields.io/badge/MLH-Hack_Days_2026-FF4B4B?style=for-the-badge&logo=majorleaguehacking&logoColor=white)](https://mlh.io/)
+[![Snowflake](https://img.shields.io/badge/Snowflake-Data_Cloud-29B5E8?style=for-the-badge&logo=snowflake&logoColor=white)](https://www.snowflake.com/)
+[![Groq](https://img.shields.io/badge/Groq-LPU_Inference-F05A28?style=for-the-badge&logo=fastapi&logoColor=white)](https://groq.com/)
+[![Next.js 14](https://img.shields.io/badge/Next.js-14_App_Router-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-It centralizes college notices, examination schedules, hackathon announcements, departmental circulars, and internship guidelines into a single, unified Retrieval-Augmented Generation (RAG) platform.
+<br/>
 
-> ❄️ **Core Architectural Pillar:** Snowflake is the central compute, storage, and AI engine of this application. By leveraging native **Snowflake Cortex AI** functions, embedding generation, vector similarity search, and generative LLM inference all occur directly within the Snowflake Data Cloud perimeter—eliminating third-party vector databases and external LLM APIs.
+> **Built for the MLH Hack Days — "Best Use of Snowflake" Challenge**  
+> An end-to-end Retrieval-Augmented Generation (RAG) platform centralizing academic notices, placement routines, hackathon announcements, syllabi, and administrative circulars into an instant, citation-grounded student engine.
+
+[🌐 Explore Live Application](https://ai-hackathon-blush.vercel.app/) • [📖 Documentation](#-table-of-contents) • [⚡ Snowflake Engine](#-why-snowflake-core-architectural-pillar) • [🚀 Quick Start](#-quick-start)
+
+</div>
 
 ---
 
-## ⚠️ The Problem
-College students frequently struggle with fragmented information:
-* Announcements and notices are buried in messaging groups and bulletin boards.
-* Exam routines, deadlines, and hackathon schedules are easily missed.
-* Official circulars are lengthy, dense PDFs that are time-consuming to parse.
+## 📑 Table of Contents
 
-## 💡 The Solution
-**TMSL AI** provides a unified AI portal where students can search, query, and interact with all college documents through natural language conversation, semantic search, and automated timeline extraction—with cited references and confidence scores.
+- [Overview & Problem Statement](#-overview--problem-statement)
+- [Why Snowflake? (Core Architectural Pillar)](#-why-snowflake-core-architectural-pillar)
+- [System Architecture](#-system-architecture)
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Snowflake Schema Design](#-snowflake-schema-design)
+- [API Reference](#-api-reference)
+- [Quick Start](#-quick-start)
+- [Deployment](#-deployment)
+- [Team & Acknowledgements](#-team--acknowledgements)
+- [License](#-license)
+
+---
+
+## 💡 Overview & Problem Statement
+
+### ⚠️ The Problem
+In modern universities like Techno Main Salt Lake (TMSL), critical information is heavily fragmented:
+* **Scattered Information**: Examination routines, placement circulars, fee deadlines, and hackathon notices are buried across WhatsApp groups, Telegram channels, bulletin boards, and unstructured PDF portals.
+* **Missed Opportunities**: Strict registration cutoffs and eligibility criteria (CGPA/backlogs) are frequently overlooked by students.
+* **Document Fatigue**: Lengthy 10-page institutional circulars force students and faculty to manually skim for crucial dates.
+
+### 🎯 The Solution
+**TMSL AI** is a specialized, production-ready campus intelligence engine:
+1. **Grounded AI Q&A**: Answers student questions in seconds with exact citations and confidence scores.
+2. **Native Snowflake Similarity Search**: Computes string and pattern relevance inside Snowflake SQL using `JAROWINKLER_SIMILARITY` and `ILIKE`.
+3. **Groq LPU Reasoning**: Synthesizes verified context into clear Markdown answers, auto-summaries, and action items with zero hallucination.
+4. **Automated Event Extraction**: Surfaces deadlines and venue details directly into an interactive calendar view.
+
+---
+
+## ❄️ Why Snowflake? (Core Architectural Pillar)
+
+In standard AI applications, developers add an external vector database (Pinecone, Milvus) alongside a standard relational database, causing synchronization headaches and data egress costs.
+
+**TMSL AI treats Snowflake as the central database and computational engine:**
+
+1. **Unified Storage & Governance**:
+   Document metadata, text chunks, extracted events, and audit logs are co-located in Snowflake (`DOCUMENTS`, `DOCUMENT_CHUNKS`, `EVENTS`, `QUERIES`).
+2. **In-Database Similarity Computation**:
+   Relevance scoring is calculated directly inside Snowflake SQL via native `JAROWINKLER_SIMILARITY`:
+   ```sql
+   SELECT 
+       DOCUMENT_TITLE,
+       CATEGORY,
+       CHUNK_TEXT,
+       ROUND(JAROWINKLER_SIMILARITY(CHUNK_TEXT, :query) / 100, 2) AS SIMILARITY_SCORE
+   FROM TMSL_AI.PUBLIC.DOCUMENT_CHUNKS
+   WHERE ILIKE(CHUNK_TEXT, :pattern) OR ILIKE(DOCUMENT_TITLE, :pattern)
+   ORDER BY SIMILARITY_SCORE DESC
+   LIMIT 5;
+   ```
+3. **Universal Snowflake Compatibility**:
+   Engineered to run seamlessly across all Snowflake tiers (Standard, Trial, Enterprise), with native upgrade hooks for Snowflake Cortex Vector (`VECTOR(FLOAT, 1024)` + `SNOWFLAKE.CORTEX.EMBED_TEXT_1024`).
+4. **Audit & Query Telemetry**:
+   Every student interaction, retrieved chunk ID, citation list, and latency metric is audited into the `QUERIES` table for institutional analytics.
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Client["🖥️ User Interface (Next.js 14 + Tailwind)"]
+        UI_Chat["💬 AI Chat (/chat)"]
+        UI_Search["🔍 Semantic Search (/search)"]
+        UI_Events["📅 Events & Deadlines (/events)"]
+        UI_Docs["📄 Document Hub (/documents)"]
+        UI_Dash["📊 Analytics (/dashboard)"]
+    end
+
+    subgraph API["⚡ Serverless Backend API Routes"]
+        R_Chat["/api/chat"]
+        R_Search["/api/search"]
+        R_Events["/api/events"]
+        R_Docs["/api/documents"]
+        R_Summ["/api/documents/[id]/summarize"]
+    end
+
+    subgraph Snowflake["❄️ Snowflake Data Cloud (TMSL_AI.PUBLIC)"]
+        T_Docs[("📑 DOCUMENTS\n(Metadata & Raw Text)")]
+        T_Chunks[("🧩 DOCUMENT_CHUNKS\n(Text Chunks & Index)")]
+        T_Events[("📅 EVENTS\n(Deadlines, Venue, Organizer)")]
+        T_Queries[("📊 QUERIES\n(Audit Logs & Citations)")]
+        SQL_Sim["⚡ Snowflake SQL Engine\nJAROWINKLER_SIMILARITY()"]
+    end
+
+    subgraph Groq["⚡ Groq LPU Inference Engine"]
+        LPU["🤖 openai/gpt-oss-120b\n(Sub-Second RAG Synthesis)"]
+    end
+
+    %% Flow connections
+    Client --> API
+    R_Search --> SQL_Sim
+    SQL_Sim --> T_Chunks
+    
+    R_Chat --> SQL_Sim
+    SQL_Sim --> T_Chunks
+    T_Chunks -->|Retrieved Chunks| R_Chat
+    R_Chat -->|Context + Question| LPU
+    LPU -->|Grounded Answer| R_Chat
+    R_Chat -->|Audit Logging| T_Queries
+
+    R_Docs --> T_Docs
+    R_Docs --> T_Chunks
+    R_Events --> T_Events
+    R_Summ --> LPU
+
+    style Snowflake fill:#29B5E8,stroke:#0A2540,stroke-width:2px,color:#fff
+    style Groq fill:#F05A28,stroke:#0A2540,stroke-width:2px,color:#fff
+    style Client fill:#1E293B,stroke:#38BDF8,stroke-width:2px,color:#fff
+```
 
 ---
 
 ## ✨ Key Features
 
-- 💬 **Grounded AI Chat (`/chat`)**: RAG-powered student assistant citing exact source documents and chunk indexes.
-- 🔍 **Semantic Smart Search (`/search`)**: Meaning-based document retrieval using Snowflake Arctic vector embeddings.
-- 📄 **Knowledge Base Manager (`/documents`)**: Upload PDF, DOCX, and TXT files with automated text cleaning, chunking, and vector indexing.
-- ✨ **Cortex Auto-Summarization (`/documents/[id]`)**: Instant extraction of key points, important dates, required actions, and eligibility criteria powered by Cortex `COMPLETE`.
-- 📅 **Automated Event & Deadline Timeline (`/events`)**: Automatically identifies upcoming hackathons, workshops, exams, and placement drives.
-- 📊 **Analytics Dashboard (`/dashboard`)**: Visualized query metrics, top-referenced documents, and document category distribution.
-- 🏗️ **Interactive Architecture Explorer (`/architecture`)**: Technical deep dive into native Snowflake RAG vs. traditional multi-vendor stacks.
-- 🚀 **Built-in Demo Mode**: Pre-loaded with realistic college records for instant judging and presentations, seamlessly switching to live Snowflake queries when configured.
-
----
-
-## ❄️ Snowflake Architecture & Challenge Alignment
-
-```mermaid
-graph TD;
-  A[Document Upload PDF/DOCX/TXT] --> B[Text Extraction & Chunking Engine];
-  B --> C["CORTEX EMBED_TEXT_1024 ('snowflake-arctic-embed-l-v2.0')"];
-  C --> D[(Snowflake Table: DOCUMENT_CHUNKS with VECTOR Type)];
-  
-  F[Student Question / Query] --> G["CORTEX EMBED_TEXT_1024 ('snowflake-arctic-embed-l-v2.0')"];
-  G --> H["VECTOR_COSINE_SIMILARITY(c.EMBEDDING, query_vec)"];
-  D --> H;
-  H --> I[Retrieved Context & Top Chunks];
-  
-  I --> J["CORTEX COMPLETE ('mistral-large2')"];
-  F --> J;
-  J --> K[Grounded Answer with Source Citations];
-  
-  style D fill:#29B5E8,stroke:#000,stroke-width:2px,color:#fff
-  style C fill:#29B5E8,stroke:#000,stroke-width:2px,color:#fff
-  style G fill:#29B5E8,stroke:#000,stroke-width:2px,color:#fff
-  style H fill:#29B5E8,stroke:#000,stroke-width:2px,color:#fff
-  style J fill:#29B5E8,stroke:#000,stroke-width:2px,color:#fff
-```
-
-### 1. Vector Embeddings with Snowflake Cortex
-```sql
-SNOWFLAKE.CORTEX.EMBED_TEXT_1024('snowflake-arctic-embed-l-v2.0', chunk_content)
-```
-Generates dense 1024-dimensional semantic vectors directly within SQL during ingestion.
-
-### 2. Native Vector Storage
-Embeddings are stored using Snowflake's native `VECTOR(FLOAT, 1024)` column type in `DOCUMENT_CHUNKS`. No external vector database (Pinecone, Weaviate, Milvus) is required.
-
-### 3. Single-Query Vector Similarity Search
-```sql
-SELECT c.CHUNK_ID, c.CONTENT, d.TITLE AS DOCUMENT_TITLE,
-       VECTOR_COSINE_SIMILARITY(c.EMBEDDING,
-         SNOWFLAKE.CORTEX.EMBED_TEXT_1024('snowflake-arctic-embed-l-v2.0', ?)) AS RELEVANCE_SCORE
-FROM DOCUMENT_CHUNKS c
-JOIN DOCUMENTS d ON c.DOCUMENT_ID = d.DOCUMENT_ID
-ORDER BY RELEVANCE_SCORE DESC
-LIMIT 5;
-```
-Embeds the user's question and ranks stored chunks in a single native SQL query.
-
-### 4. Generative Inference with Snowflake Cortex
-```sql
-SELECT SNOWFLAKE.CORTEX.COMPLETE('mistral-large2', prompt_with_context) AS RESPONSE;
-```
-Answers, summaries, and event extraction are generated securely inside Snowflake with zero external data transfer.
+| Feature | Route | Description |
+|---|---|---|
+| **💬 Grounded AI Chat** | [`/chat`](https://ai-hackathon-blush.vercel.app/chat) | Natural language Q&A citing source documents, chunk IDs, and confidence percentages. |
+| **🔍 Semantic Smart Search** | [`/search`](https://ai-hackathon-blush.vercel.app/search) | Meaning & keyword matching powered by Snowflake's native `JAROWINKLER_SIMILARITY`. |
+| **📅 Events & Deadlines** | [`/events`](https://ai-hackathon-blush.vercel.app/events) | Chronological schedule of hackathons, exams, and placement drives with singular/plural category filters. |
+| **📄 Document Hub & Upload** | [`/documents`](https://ai-hackathon-blush.vercel.app/documents) | Ingest multi-page PDFs, DOCX, and TXT files with client-side drag-and-drop and automated chunking. |
+| **✨ Instant Summarization** | `/documents/[id]` | One-click synthesis of long notices into key takeaways, deadlines, and eligibility rules. |
+| **📊 Analytics Dashboard** | [`/dashboard`](https://ai-hackathon-blush.vercel.app/dashboard) | Institutional telemetry displaying query trends, popular categories, and top-referenced documents. |
+| **🏛️ Architecture Visualizer** | [`/architecture`](https://ai-hackathon-blush.vercel.app/architecture) | Interactive comparison of Native Snowflake RAG versus fragmented multi-vendor stacks. |
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component | Technology | Description |
-|-----------|------------|-------------|
-| **Database & AI Engine** | **Snowflake Data Cloud & Cortex AI** | Vector storage, embeddings, vector search, LLM completion |
-| **Frontend Framework** | **Next.js 14 (App Router)** | Server & client components, API routes |
-| **Language** | **TypeScript** | End-to-end type safety |
-| **Styling** | **Tailwind CSS & shadcn/ui** | Responsive, modern UI with dark mode support |
-| **Animations** | **Framer Motion** | Smooth interactive transitions |
-| **Charts** | **Recharts** | Real-time analytics visualization |
-| **Document Processing** | **pdf-parse & mammoth** | Multi-format document text extraction |
+```
+Frontend:          Next.js 14 (App Router) • React 18 • TypeScript • Tailwind CSS • shadcn/ui
+Animations:        Framer Motion • Lucide React Icons
+Data Visualization:Recharts
+Data Cloud:        Snowflake (Standard / Trial / Enterprise)
+Database Driver:   snowflake-sdk (Node.js Connection Pool)
+AI Inference:      Groq LPU Cloud (openai/gpt-oss-120b)
+Document Parsing:  pdf-parse • mammoth (DOCX)
+Hosting & CI/CD:   Vercel Edge Network
+```
 
 ---
 
-## 🚀 Getting Started
+## 🗄️ Snowflake Schema Design
 
-### 1. Clone the Repository
+The tables are configured in database `TMSL_AI`, schema `PUBLIC`:
+
+```sql
+-- 1. Document Registry
+CREATE TABLE IF NOT EXISTS DOCUMENTS (
+    DOCUMENT_ID VARCHAR(36) PRIMARY KEY,
+    TITLE VARCHAR(255) NOT NULL,
+    CATEGORY VARCHAR(64) NOT NULL,
+    RAW_CONTENT TEXT NOT NULL,
+    CHUNK_COUNT INT DEFAULT 0,
+    UPLOADED_BY VARCHAR(64) DEFAULT 'Admin',
+    CREATED_AT TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+-- 2. Document Chunks for Similarity Search
+CREATE TABLE IF NOT EXISTS DOCUMENT_CHUNKS (
+    CHUNK_ID VARCHAR(36) PRIMARY KEY,
+    DOCUMENT_ID VARCHAR(36) REFERENCES DOCUMENTS(DOCUMENT_ID) ON DELETE CASCADE,
+    DOCUMENT_TITLE VARCHAR(255) NOT NULL,
+    CATEGORY VARCHAR(64) NOT NULL,
+    CHUNK_INDEX INT NOT NULL,
+    CHUNK_TEXT TEXT NOT NULL,
+    CREATED_AT TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+-- 3. Campus Events & Deadlines
+CREATE TABLE IF NOT EXISTS EVENTS (
+    EVENT_ID VARCHAR(36) PRIMARY KEY,
+    DOCUMENT_ID VARCHAR(36) REFERENCES DOCUMENTS(DOCUMENT_ID) ON DELETE CASCADE,
+    EVENT_NAME VARCHAR(255) NOT NULL,
+    EVENT_TYPE VARCHAR(64) NOT NULL,
+    START_DATE TIMESTAMP_NTZ,
+    LOCATION VARCHAR(255),
+    ORGANIZER VARCHAR(255),
+    REGISTRATION_DEADLINE TIMESTAMP_NTZ,
+    ELIGIBILITY TEXT,
+    DETAILS TEXT,
+    CREATED_AT TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+-- 4. Audit Queries & Citation Telemetry
+CREATE TABLE IF NOT EXISTS QUERIES (
+    QUERY_ID VARCHAR(36) PRIMARY KEY,
+    USER_QUERY TEXT NOT NULL,
+    AI_RESPONSE TEXT NOT NULL,
+    CITATIONS VARIANT,
+    LATENCY_MS INT,
+    CREATED_AT TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+```
+
+---
+
+## 🔌 API Reference
+
+| Endpoint | Method | Payload / Params | Description |
+|---|---|---|---|
+| `/api/documents` | `GET` | `?category=...&search=...` | List all documents with chunk counts from Snowflake. |
+| `/api/documents/upload` | `POST` | `multipart/form-data` | Ingest PDF/DOCX/TXT, auto-chunk, and insert into Snowflake. |
+| `/api/documents/[id]` | `GET` | — | Retrieve document metadata and its associated chunks. |
+| `/api/documents/[id]` | `DELETE`| — | Cascade delete a document and its chunks from Snowflake. |
+| `/api/documents/[id]/summarize` | `POST` | — | Generate structured AI summary using Groq + Snowflake content. |
+| `/api/chat` | `POST` | `{"question": "..."}` | Run Snowflake RAG retrieval + Groq synthesis + query audit log. |
+| `/api/search` | `POST` | `{"query": "..."}` | Rank chunks via Snowflake `JAROWINKLER_SIMILARITY`. |
+| `/api/events` | `GET` | `?category=...&upcoming=true`| List campus events with ISO-standardized dates. |
+| `/api/analytics` | `GET` | — | Fetch real-time metrics, query volume, and category stats. |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+* **Node.js**: v18.0.0 or higher
+* **Snowflake Account**: Any standard, trial, or enterprise account
+* **Groq API Key**: Free tier available at [console.groq.com](https://console.groq.com/)
+
+### 1. Clone Repository
 ```bash
 git clone https://github.com/omjeesingh882-bit/AI_HACKATHON.git
 cd AI_HACKATHON
@@ -117,60 +258,65 @@ cd AI_HACKATHON
 npm install
 ```
 
-### 3. Configure Environment Variables
-Create a `.env.local` file (or copy from `.env.example`):
+### 3. Setup Environment Variables
+Create `.env.local` in the project root:
 ```env
-# Snowflake Credentials
-SNOWFLAKE_ACCOUNT=your_account_identifier
-SNOWFLAKE_USER=your_username
-SNOWFLAKE_PASSWORD=your_password
+# Snowflake Configuration
+SNOWFLAKE_ACCOUNT=your_account_identifier (e.g. ORG-ACCOUNT)
+SNOWFLAKE_USER=your_snowflake_username
+SNOWFLAKE_PASSWORD=your_snowflake_password
 SNOWFLAKE_DATABASE=TMSL_AI
 SNOWFLAKE_SCHEMA=PUBLIC
 SNOWFLAKE_WAREHOUSE=COMPUTE_WH
-SNOWFLAKE_ROLE=SYSADMIN
+SNOWFLAKE_ROLE=ACCOUNTADMIN
 
-# Application Mode
-DEMO_MODE=true
+# Groq AI Inference
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=openai/gpt-oss-120b
+
+# Application
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+DEMO_MODE=true
 ```
-> **Note:** With `DEMO_MODE=true`, the application runs immediately with pre-loaded college knowledge records even before configuring Snowflake credentials!
 
-### 4. (Optional) Initialize Snowflake Schema
-If connecting to your Snowflake account:
-1. Open a **Snowflake Worksheet**.
-2. Run [`snowflake/schema.sql`](snowflake/schema.sql) to set up tables and vector column.
-3. Run [`snowflake/seed.sql`](snowflake/seed.sql) to populate sample college data.
+### 4. Setup Snowflake Worksheet
+1. Log into your **Snowflake Web UI**.
+2. Open a new SQL Worksheet.
+3. Run [`snowflake/schema.sql`](snowflake/schema.sql) to provision tables.
+4. (Optional) Run [`snowflake/seed.sql`](snowflake/seed.sql) to load initial college circulars and events.
 
-### 5. Run the Application
+### 5. Start Development Server
 ```bash
-# Development mode
 npm run dev
-
-# Or Production build & start
-npm run build
-npm run start
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🔌 API Reference
+## 🌐 Deployment
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/documents` | GET | List all documents with chunk counts and category filtering |
-| `/api/documents/upload` | POST | Ingest document (PDF/DOCX/TXT), chunk, and vectorize into Snowflake |
-| `/api/documents/[id]` | GET | Get document details and raw vector chunks |
-| `/api/documents/[id]` | DELETE | Delete document and associated vector chunks from Snowflake |
-| `/api/documents/[id]/summarize` | POST | Generate AI summary using Snowflake Cortex `COMPLETE` |
-| `/api/chat` | POST | Execute RAG pipeline via Cortex embeddings & LLM completion |
-| `/api/search` | POST | Semantic similarity search using `VECTOR_COSINE_SIMILARITY` |
-| `/api/events` | GET | Retrieve timeline of extracted events and deadlines |
-| `/api/analytics` | GET | Real-time query counts, category breakdowns, and document hits |
-| `/api/demo/seed` | POST | Seed demo college knowledge records into Snowflake |
+The project is pre-configured for one-click deployment on **Vercel**:
+
+1. Push your repository to GitHub.
+2. Import the project into your [Vercel Dashboard](https://vercel.com).
+3. Set the Environment Variables (`SNOWFLAKE_*`, `GROQ_*`) in the Vercel project settings.
+4. Deploy!
+
+Live production build: **[https://ai-hackathon-blush.vercel.app/](https://ai-hackathon-blush.vercel.app/)**
+
+---
+
+## 👥 Team & Acknowledgements
+
+* **Built by**: TMSL AI Engineering Team
+* **Submitted to**: **MLH Hack Days 2026**
+* **Track**: **Best Use of Snowflake**
+* **Institution**: Techno Main Salt Lake (TMSL), Kolkata
+
+Special thanks to **Snowflake** for enabling native in-database computational analytics, and **Major League Hacking (MLH)** for hosting Hack Days!
 
 ---
 
 ## 📄 License
-Built with ❤️ for **MLH Hack Days — Best Use of Snowflake** by the **TMSL AI Team**.
-Released under the [MIT License](LICENSE).
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
