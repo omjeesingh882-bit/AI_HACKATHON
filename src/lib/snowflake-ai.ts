@@ -1,5 +1,6 @@
 import { executeQuery } from './snowflake';
 import { SearchResult, DocumentSummary, EventData } from './types';
+import { callGroqAi } from './groq';
 
 export async function vectorSearch(queryText: string, limit: number = 5): Promise<SearchResult[]> {
   try {
@@ -80,14 +81,33 @@ export async function generateAnswer(
   }
 
   const uniqueTitles = Array.from(new Set(sources.map(s => s.title)));
-  const primarySource = sources[0];
 
+  // Try generating with Groq AI using the context retrieved from Snowflake
+  const groqAnswer = await callGroqAi([
+    {
+      role: 'system',
+      content: `You are TMSL AI, the intelligent college knowledge assistant for Techno Main Salt Lake (TMSL).
+Your job is to answer student questions accurately, politely, and clearly based strictly on the provided context retrieved from the Snowflake Data Cloud.
+Highlight important dates, eligibility, and rules in bold. Use clean Markdown formatting.`,
+    },
+    {
+      role: 'user',
+      content: `Retrieved Snowflake Context:\n${context}\n\nStudent Question: ${question}\n\nAnswer:`,
+    }
+  ], { temperature: 0.2, max_tokens: 800 });
+
+  if (groqAnswer && groqAnswer.trim().length > 10) {
+    return `${groqAnswer}\n\n*Sources: ${uniqueTitles.join(', ')}*`;
+  }
+
+  // Fallback if Groq is unavailable
+  const primarySource = sources[0];
   let answer = `Based on official records retrieved from **Snowflake Data Cloud**:\n\n`;
   answer += `${primarySource.content}\n\n`;
 
   if (sources.length > 1) {
     answer += `### Related Information\n`;
-    sources.slice(1).forEach((s, idx) => {
+    sources.slice(1).forEach((s) => {
       answer += `* **${s.title}**: ${s.content}\n`;
     });
     answer += `\n`;
@@ -98,6 +118,45 @@ export async function generateAnswer(
 }
 
 export async function summarizeDocument(text: string): Promise<DocumentSummary> {
+  // Try Groq AI for intelligent structured summary
+  const groqSummaryJson = await callGroqAi([
+    {
+      role: 'system',
+      content: `You are an expert document summarizer for college academic documents. Return ONLY a valid JSON object with the following schema, no markdown fences or other text:
+{
+  "short_summary": "2-3 sentence overview",
+  "key_points": ["point 1", "point 2", "point 3"],
+  "important_dates": ["date 1", "date 2"],
+  "eligibility": "eligibility criteria",
+  "required_actions": ["action 1", "action 2"],
+  "contact_info": "contact info or department"
+}`,
+    },
+    {
+      role: 'user',
+      content: `Summarize this college document:\n\n${text.slice(0, 3500)}`,
+    }
+  ], { temperature: 0.1, max_tokens: 600 });
+
+  if (groqSummaryJson) {
+    try {
+      const parsed = JSON.parse(groqSummaryJson);
+      if (parsed.short_summary && parsed.key_points) {
+        return {
+          short_summary: parsed.short_summary,
+          key_points: Array.isArray(parsed.key_points) ? parsed.key_points : [parsed.key_points],
+          important_dates: Array.isArray(parsed.important_dates) ? parsed.important_dates : [parsed.important_dates],
+          eligibility: parsed.eligibility || 'Open to all students',
+          required_actions: Array.isArray(parsed.required_actions) ? parsed.required_actions : [parsed.required_actions],
+          contact_info: parsed.contact_info || 'Department Office / Administration'
+        };
+      }
+    } catch {
+      // If JSON parsing fails, continue to fallback
+    }
+  }
+
+  // Robust fallback
   const sentences = text
     .split(/(?<=[.?!])\s+/)
     .map(s => s.trim())
@@ -106,7 +165,6 @@ export async function summarizeDocument(text: string): Promise<DocumentSummary> 
   const short_summary = sentences.slice(0, 2).join(' ') || text.slice(0, 200);
   const key_points = sentences.slice(0, 5);
 
-  // Extract dates
   const dateRegex = /\b(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\/\d{1,2}\/\d{4}\b/gi;
   const datesFound = Array.from(new Set(text.match(dateRegex) || []));
 
