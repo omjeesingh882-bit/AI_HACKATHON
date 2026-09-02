@@ -59,6 +59,7 @@ declare module 'lucide-react' {
   export const Award: LucideIcon;
   export const BookOpen: LucideIcon;
   export const Terminal: LucideIcon;
+  export const RefreshCw: LucideIcon;
 
   const icons: Record<string, LucideIcon>;
   export default icons;
