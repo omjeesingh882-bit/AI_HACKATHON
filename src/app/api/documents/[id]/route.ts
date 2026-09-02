@@ -14,38 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   try {
     const id = params.id;
 
-    if (process.env.DEMO_MODE === 'true' && !process.env.SNOWFLAKE_ACCOUNT) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          document_id: id,
-          title: 'Hack Days TMSL Kolkata 2026',
-          filename: 'Hack_Days_TMSL_2026.pdf',
-          category: 'hackathon',
-          department: 'CSE / All Departments',
-          source: 'College Notice Board',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          chunk_count: 2,
-          chunks: [
-            {
-              chunk_id: 'chunk-1',
-              chunk_index: 0,
-              content: 'Notice: MLH Hack Days at TMSL is scheduled for September 10-11, 2026. Teams of 1-4 members can participate. Open to all engineering branches. Registration deadline is September 1st, 2026. Cash prizes, cloud credits, and certificate of participation included.'
-            },
-            {
-              chunk_id: 'chunk-2',
-              chunk_index: 1,
-              content: 'Hackathon tracks include AI & Machine Learning with Snowflake Cortex, Web3 Decentralized Apps, HealthTech, and Open Innovation. Mentors from Major League Hacking and Snowflake community will be on site.'
-            }
-          ]
-        }
-      });
-    }
-
-    const docSql = `
-      SELECT * FROM DOCUMENTS WHERE DOCUMENT_ID = ?
-    `;
+    const docSql = `SELECT * FROM TMSL_AI.PUBLIC.DOCUMENTS WHERE DOCUMENT_ID = ?`;
     const docResults = await executeQuery<any>(docSql, [id]);
     
     if (docResults.length === 0) {
@@ -53,8 +22,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 
     const chunksSql = `
-      SELECT CHUNK_ID, CHUNK_INDEX, CONTENT 
-      FROM DOCUMENT_CHUNKS 
+      SELECT CHUNK_ID, CHUNK_INDEX, CHUNK_TEXT 
+      FROM TMSL_AI.PUBLIC.DOCUMENT_CHUNKS 
       WHERE DOCUMENT_ID = ? 
       ORDER BY CHUNK_INDEX ASC
     `;
@@ -64,17 +33,18 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const document: DocumentWithChunks = {
       document_id: row.DOCUMENT_ID,
       title: row.TITLE,
-      filename: row.FILENAME,
+      filename: `${row.TITLE}.pdf`,
       category: row.CATEGORY,
-      department: row.DEPARTMENT,
-      source: row.SOURCE,
-      chunk_count: chunkResults.length,
-      created_at: row.CREATED_AT,
-      updated_at: row.UPDATED_AT,
-      chunks: chunkResults.map(c => ({
+      department: row.UPLOADED_BY || 'College Administration',
+      source: 'TMSL Portal',
+      content: row.RAW_CONTENT,
+      chunk_count: chunkResults.length || 1,
+      created_at: row.CREATED_AT ? String(row.CREATED_AT) : new Date().toISOString(),
+      updated_at: row.CREATED_AT ? String(row.CREATED_AT) : new Date().toISOString(),
+      chunks: chunkResults.map((c: any) => ({
         chunk_id: c.CHUNK_ID,
         chunk_index: c.CHUNK_INDEX,
-        content: c.CONTENT
+        content: c.CHUNK_TEXT
       }))
     };
 
@@ -89,19 +59,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   try {
     const id = params.id;
     
-    if (process.env.DEMO_MODE === 'true' && !process.env.SNOWFLAKE_ACCOUNT) {
-      return NextResponse.json({ success: true, data: null });
-    }
-
-    // Delete query sources associated with chunks of this doc
-    await executeQuery(`
-      DELETE FROM QUERY_SOURCES 
-      WHERE CHUNK_ID IN (SELECT CHUNK_ID FROM DOCUMENT_CHUNKS WHERE DOCUMENT_ID = ?)
-    `, [id]);
-
-    await executeQuery('DELETE FROM EVENTS WHERE DOCUMENT_ID = ?', [id]);
-    await executeQuery('DELETE FROM DOCUMENT_CHUNKS WHERE DOCUMENT_ID = ?', [id]);
-    await executeQuery('DELETE FROM DOCUMENTS WHERE DOCUMENT_ID = ?', [id]);
+    await executeQuery('DELETE FROM TMSL_AI.PUBLIC.DOCUMENT_CHUNKS WHERE DOCUMENT_ID = ?', [id]);
+    await executeQuery('DELETE FROM TMSL_AI.PUBLIC.EVENTS WHERE DOCUMENT_ID = ?', [id]);
+    await executeQuery('DELETE FROM TMSL_AI.PUBLIC.DOCUMENTS WHERE DOCUMENT_ID = ?', [id]);
 
     return NextResponse.json({ success: true, data: null });
   } catch (error: any) {

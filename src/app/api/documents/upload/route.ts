@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processDocument } from '@/lib/document-processor';
-import { extractEventsFromDocument } from '@/lib/event-extractor';
 import { executeQuery } from '@/lib/snowflake';
 import { ApiResponse, Document } from '@/lib/types';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<Document>>> {
   try {
@@ -10,8 +10,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<D
     const file = formData.get('file') as File | null;
     const title = (formData.get('title') as string | null) || (file ? file.name : 'Untitled');
     const category = (formData.get('category') as string | null) || 'general';
-    const department = (formData.get('department') as string | null) || 'General';
-    const source = (formData.get('source') as string | null) || 'Manual Upload';
+    const department = (formData.get('department') as string | null) || 'Administration';
 
     if (!file) {
       return NextResponse.json({ success: false, error: 'File is required' }, { status: 400 });
@@ -21,39 +20,29 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<D
       return NextResponse.json({ success: false, error: 'File size exceeds 10MB limit' }, { status: 400 });
     }
 
-    const { documentId, chunks, fullText } = await processDocument(file, { title, category, department, source });
+    const { documentId, chunks, fullText } = await processDocument(file, { title, category, department, source: 'Upload' });
 
-    if (process.env.DEMO_MODE !== 'true' || process.env.SNOWFLAKE_ACCOUNT) {
-      const insertDocSql = `
-        INSERT INTO DOCUMENTS (DOCUMENT_ID, TITLE, FILENAME, CATEGORY, DEPARTMENT, SOURCE, FULL_TEXT)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+    // 1. Insert into DOCUMENTS
+    const insertDocSql = `
+      INSERT INTO TMSL_AI.PUBLIC.DOCUMENTS (DOCUMENT_ID, TITLE, CATEGORY, RAW_CONTENT, CHUNK_COUNT, UPLOADED_BY)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    await executeQuery(insertDocSql, [documentId, title, category, fullText, chunks.length, department]);
+
+    // 2. Insert into DOCUMENT_CHUNKS
+    for (const chunk of chunks) {
+      const insertChunkSql = `
+        INSERT INTO TMSL_AI.PUBLIC.DOCUMENT_CHUNKS (CHUNK_ID, DOCUMENT_ID, DOCUMENT_TITLE, CATEGORY, CHUNK_INDEX, CHUNK_TEXT)
+        VALUES (?, ?, ?, ?, ?, ?)
       `;
-      await executeQuery(insertDocSql, [documentId, title, file.name, category, department, source, fullText]);
-
-      for (const chunk of chunks) {
-        const insertChunkSql = `
-          INSERT INTO DOCUMENT_CHUNKS (CHUNK_ID, DOCUMENT_ID, CHUNK_INDEX, CONTENT, EMBEDDING)
-          SELECT ?, ?, ?, ?, SNOWFLAKE.CORTEX.EMBED_TEXT_1024('snowflake-arctic-embed-l-v2.0', ?)
-        `;
-        await executeQuery(insertChunkSql, [chunk.chunkId, documentId, chunk.chunkIndex, chunk.content, chunk.content]);
-      }
-
-      try {
-        const events = await extractEventsFromDocument(documentId, fullText);
-        for (const event of events) {
-          const insertEventSql = `
-            INSERT INTO EVENTS (EVENT_ID, DOCUMENT_ID, TITLE, DESCRIPTION, EVENT_DATE, REGISTRATION_DEADLINE, LOCATION, ORGANIZER, ELIGIBILITY, CATEGORY)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `;
-          await executeQuery(insertEventSql, [
-            event.event_id, event.document_id, event.title, event.description, 
-            event.event_date || null, event.registration_deadline || null, event.location, 
-            event.organizer, event.eligibility, event.category
-          ]);
-        }
-      } catch (evtErr) {
-        console.warn('Event extraction skipped or failed:', evtErr);
-      }
+      await executeQuery(insertChunkSql, [
+        chunk.chunkId, 
+        documentId, 
+        title, 
+        category, 
+        chunk.chunkIndex, 
+        chunk.content
+      ]);
     }
 
     const newDoc: Document = {
@@ -62,7 +51,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<D
       filename: file.name,
       category: category as any,
       department,
-      source,
+      source: 'Upload',
       chunk_count: chunks.length,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

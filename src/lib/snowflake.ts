@@ -5,13 +5,11 @@ let isConnecting = false;
 let connectionPromise: Promise<Connection> | null = null;
 
 export async function getConnection(): Promise<Connection> {
-  const isDemo = process.env.DEMO_MODE === 'true' || !process.env.SNOWFLAKE_ACCOUNT;
-
   if (cachedConnection && cachedConnection.isUp()) {
     return cachedConnection;
   }
 
-  // If no Snowflake credentials configured, return demo mock connection
+  // If no Snowflake credentials configured at all, return demo mock connection
   if (!process.env.SNOWFLAKE_ACCOUNT) {
     cachedConnection = {
       isUp: () => true,
@@ -37,7 +35,7 @@ export async function getConnection(): Promise<Connection> {
       database: process.env.SNOWFLAKE_DATABASE || 'TMSL_AI',
       schema: process.env.SNOWFLAKE_SCHEMA || 'PUBLIC',
       warehouse: process.env.SNOWFLAKE_WAREHOUSE || 'COMPUTE_WH',
-      role: process.env.SNOWFLAKE_ROLE || 'SYSADMIN',
+      role: process.env.SNOWFLAKE_ROLE || 'ACCOUNTADMIN',
       application: 'TMSL_AI_APP'
     });
 
@@ -45,8 +43,8 @@ export async function getConnection(): Promise<Connection> {
       isConnecting = false;
       if (err) {
         console.error('Snowflake connection error:', err.message);
-        if (isDemo) {
-          console.warn('Running in demo mode, returning mock connection due to error.');
+        if (process.env.DEMO_MODE === 'true') {
+          console.warn('Returning mock connection due to connection error.');
           cachedConnection = {
             isUp: () => true,
             execute: (options: any) => {
@@ -72,11 +70,6 @@ export async function executeQuery<T>(sql: string, binds: any[] = []): Promise<T
   try {
     const conn = await getConnection();
     
-    // Demo mode fallback handling if it's a mock connection
-    if ((process.env.DEMO_MODE === 'true' || !process.env.SNOWFLAKE_ACCOUNT) && !(conn as any).execute) {
-      return [] as T[];
-    }
-
     return new Promise<T[]>((resolve, reject) => {
       conn.execute({
         sqlText: sql,
@@ -98,6 +91,5 @@ export async function executeQuery<T>(sql: string, binds: any[] = []): Promise<T
 }
 
 export function isConnected(): boolean {
-  if ((process.env.DEMO_MODE === 'true' || !process.env.SNOWFLAKE_ACCOUNT) && cachedConnection) return true;
   return cachedConnection !== null && cachedConnection.isUp();
 }

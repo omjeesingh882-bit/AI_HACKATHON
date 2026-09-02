@@ -5,6 +5,7 @@ import { ApiResponse, QuerySource } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<{ answer: string; sources: QuerySource[] }>>> {
+  const startTime = Date.now();
   try {
     const body = await req.json();
     const { question } = body;
@@ -19,8 +20,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<{
     const sourcesInfo = searchResults.map(res => ({ title: res.document_title, content: res.content }));
     
     const answer = await generateAnswer(question, context, sourcesInfo);
-    
+    const latencyMs = Date.now() - startTime;
     const queryId = uuidv4();
+
     const sources: QuerySource[] = searchResults.map(res => ({
       chunk_id: res.chunk_id,
       document_id: res.document_id,
@@ -30,14 +32,19 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<{
       chunk_index: 0,
     }));
 
-    if (process.env.DEMO_MODE !== 'true' || process.env.SNOWFLAKE_ACCOUNT) {
-      const insertQuerySql = `INSERT INTO QUERIES (QUERY_ID, QUESTION, ANSWER) VALUES (?, ?, ?)`;
-      await executeQuery(insertQuerySql, [queryId, question, answer]);
-      
-      for (const src of sources) {
-        const insertSourceSql = `INSERT INTO QUERY_SOURCES (QUERY_ID, CHUNK_ID, RELEVANCE_SCORE) VALUES (?, ?, ?)`;
-        await executeQuery(insertSourceSql, [queryId, src.chunk_id, src.relevance_score]);
-      }
+    try {
+      const insertQuerySql = `
+        INSERT INTO TMSL_AI.PUBLIC.QUERIES (QUERY_ID, USER_QUERY, AI_RESPONSE, CITATIONS, LATENCY_MS) 
+        VALUES (?, ?, ?, PARSE_JSON(?), ?)
+      `;
+      const citationsJson = JSON.stringify(sources.map(s => ({
+        document_title: s.document_title,
+        relevance_score: s.relevance_score
+      })));
+
+      await executeQuery(insertQuerySql, [queryId, question, answer, citationsJson, latencyMs]);
+    } catch (dbErr) {
+      console.warn('Audit query logging note:', dbErr);
     }
 
     return NextResponse.json({ success: true, data: { answer, sources } });
