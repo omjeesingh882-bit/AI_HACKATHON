@@ -44,10 +44,10 @@ function deriveNameFromEmail(email: string): string {
 export async function registerStudent(data: {
   email: string;
   password: string;
-  name?: string;
-  department?: string;
+  name: string;
+  department: string;
   rollNumber?: string;
-  year?: string;
+  year: string;
 }): Promise<{ user: User; error?: string }> {
   initializeUsers();
 
@@ -61,16 +61,29 @@ export async function registerStudent(data: {
     return { user: null as any, error: 'An account with this email already exists. Please log in.' };
   }
 
-  const displayName = data.name?.trim() || deriveNameFromEmail(emailLower);
+  const displayName = data.name?.trim();
+  if (!displayName) {
+    return { user: null as any, error: 'Full name is required' };
+  }
+
+  const dept = data.department?.trim();
+  if (!dept) {
+    return { user: null as any, error: 'Department is required' };
+  }
+
+  const studyYear = data.year?.trim();
+  if (!studyYear) {
+    return { user: null as any, error: 'Year of study is required' };
+  }
 
   const newUser: StoredUser = {
     id: `student-${uuidv4().slice(0, 8)}`,
     name: displayName,
     email: emailLower,
     role: 'student',
-    department: data.department || 'Computer Science & Engineering',
+    department: dept,
     rollNumber: data.rollNumber || `TMSL-${Math.floor(100000 + Math.random() * 900000)}`,
-    year: data.year || '1st Year',
+    year: studyYear,
     createdAt: new Date().toISOString(),
     passwordHash: data.password
   };

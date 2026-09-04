@@ -14,10 +14,10 @@ interface AuthContextType {
   register: (data: {
     email: string;
     password: string;
-    name?: string;
-    department?: string;
+    name: string;
+    department: string;
     rollNumber?: string;
-    year?: string;
+    year: string;
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   setUserDirectly: (user: User | null) => void;
@@ -73,10 +73,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: {
     email: string;
     password: string;
-    name?: string;
-    department?: string;
+    name: string;
+    department: string;
     rollNumber?: string;
-    year?: string;
+    year: string;
   }) => {
     try {
       const res = await fetch('/api/auth/register', {

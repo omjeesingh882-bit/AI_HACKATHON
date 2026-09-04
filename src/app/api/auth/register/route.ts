@@ -7,9 +7,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<{
     const body = await req.json();
     const { email, password, name, department, rollNumber, year } = body;
 
-    if (!email || !password) {
+    if (!email || !password || !name || !department || !year) {
       return NextResponse.json(
-        { success: false, error: 'Email and password are required' },
+        { success: false, error: 'Full name, email, password, department, and year of study are all mandatory.' },
         { status: 400 }
       );
     }
