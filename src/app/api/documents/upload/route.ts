@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { processDocument } from '@/lib/document-processor';
 import { executeQuery } from '@/lib/snowflake';
 import { ApiResponse, Document } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
+import { addInMemoryDocument } from '@/lib/document-store';
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<Document>>> {
   try {
@@ -23,26 +23,30 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<D
     const { documentId, chunks, fullText } = await processDocument(file, { title, category, department, source: 'Upload' });
 
     // 1. Insert into DOCUMENTS
-    const insertDocSql = `
-      INSERT INTO TMSL_AI.PUBLIC.DOCUMENTS (DOCUMENT_ID, TITLE, CATEGORY, RAW_CONTENT, CHUNK_COUNT, UPLOADED_BY)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    await executeQuery(insertDocSql, [documentId, title, category, fullText, chunks.length, department]);
-
-    // 2. Insert into DOCUMENT_CHUNKS
-    for (const chunk of chunks) {
-      const insertChunkSql = `
-        INSERT INTO TMSL_AI.PUBLIC.DOCUMENT_CHUNKS (CHUNK_ID, DOCUMENT_ID, DOCUMENT_TITLE, CATEGORY, CHUNK_INDEX, CHUNK_TEXT)
+    try {
+      const insertDocSql = `
+        INSERT INTO TMSL_AI.PUBLIC.DOCUMENTS (DOCUMENT_ID, TITLE, CATEGORY, RAW_CONTENT, CHUNK_COUNT, UPLOADED_BY)
         VALUES (?, ?, ?, ?, ?, ?)
       `;
-      await executeQuery(insertChunkSql, [
-        chunk.chunkId, 
-        documentId, 
-        title, 
-        category, 
-        chunk.chunkIndex, 
-        chunk.content
-      ]);
+      await executeQuery(insertDocSql, [documentId, title, category, fullText, chunks.length, department]);
+
+      // 2. Insert into DOCUMENT_CHUNKS
+      for (const chunk of chunks) {
+        const insertChunkSql = `
+          INSERT INTO TMSL_AI.PUBLIC.DOCUMENT_CHUNKS (CHUNK_ID, DOCUMENT_ID, DOCUMENT_TITLE, CATEGORY, CHUNK_INDEX, CHUNK_TEXT)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        await executeQuery(insertChunkSql, [
+          chunk.chunkId, 
+          documentId, 
+          title, 
+          category, 
+          chunk.chunkIndex, 
+          chunk.content
+        ]);
+      }
+    } catch (e) {
+      console.warn('Snowflake upload insert fallback handled:', e);
     }
 
     const newDoc: Document = {
@@ -51,11 +55,15 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<D
       filename: file.name,
       category: category as any,
       department,
-      source: 'Upload',
+      source: 'Admin Upload',
+      content: fullText,
       chunk_count: chunks.length,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    // Register in memory fallback so all students immediately see it
+    addInMemoryDocument(newDoc);
 
     return NextResponse.json({ success: true, data: newDoc });
   } catch (error: any) {

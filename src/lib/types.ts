@@ -102,6 +102,35 @@ export interface DocumentSummary {
   contact_info: string;
 }
 
+export type UserRole = 'student' | 'admin';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  department?: string;
+  rollNumber?: string;
+  year?: string;
+  createdAt: string;
+}
+
+export interface AuthSession {
+  user: User;
+  token: string;
+}
+
+export interface CreateEventRequest {
+  title: string;
+  description: string;
+  category: string;
+  event_date: string;
+  registration_deadline?: string;
+  location: string;
+  organizer: string;
+  eligibility: string;
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;

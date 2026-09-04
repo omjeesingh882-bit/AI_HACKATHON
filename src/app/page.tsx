@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
   MessageSquare, Search, FileText, Calendar, 
-  BarChart3, Database, Cpu, Upload, ArrowRight, FileSearch
+  BarChart3, Database, Cpu, Upload, ArrowRight, FileSearch,
+  BookOpen, Shield, CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -31,42 +32,98 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-background pt-24 pb-32">
+        <section className="relative overflow-hidden bg-background pt-20 pb-28">
           <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
           <div className="container relative z-10 mx-auto px-4 md:px-6">
             <motion.div 
               initial="hidden" 
               animate="visible" 
               variants={staggerContainer}
-              className="mx-auto max-w-[800px] text-center"
+              className="mx-auto max-w-[850px] text-center"
             >
-              <motion.div variants={fadeIn} className="mb-6 inline-flex items-center rounded-full border bg-background px-3 py-1 text-sm shadow-sm">
+              <motion.div variants={fadeIn} className="mb-6 inline-flex items-center rounded-full border bg-background px-3.5 py-1.5 text-sm shadow-sm">
                 <span className="flex h-2 w-2 rounded-full bg-[#29B5E8] mr-2"></span>
-                <span className="font-medium">Powered by Snowflake Cortex AI</span>
+                <span className="font-semibold text-[#29B5E8]">Snowflake Cortex AI</span>
+                <span className="mx-2 text-muted-foreground">•</span>
+                <span className="text-muted-foreground">Dual Student & Admin Ecosystem</span>
               </motion.div>
               
-              <motion.h1 variants={fadeIn} className="mb-8 text-5xl font-extrabold tracking-tight sm:text-7xl">
-                <span className="bg-gradient-to-r from-[#29B5E8] to-blue-600 bg-clip-text text-transparent">TMSL AI</span>
+              <motion.h1 variants={fadeIn} className="mb-6 text-5xl font-extrabold tracking-tight sm:text-7xl">
+                <span className="bg-gradient-to-r from-[#29B5E8] via-blue-600 to-indigo-600 bg-clip-text text-transparent">TMSL AI</span>
                 <br />
                 College Knowledge Engine
               </motion.h1>
               
-              <motion.p variants={fadeIn} className="mb-12 text-lg text-muted-foreground sm:text-xl">
-                Your college's entire knowledge base, intelligently searchable. Discover notices, events, 
-                guidelines, and syllabus details instantly using advanced Retrieval-Augmented Generation.
+              <motion.p variants={fadeIn} className="mb-10 text-lg text-muted-foreground sm:text-xl max-w-2xl mx-auto">
+                Unified institutional knowledge engine with dedicated <strong>Student</strong> & <strong>Admin</strong> panels.
+                Admins publish notices and events; students receive instant updates, personalized feeds, and AI Q&A.
               </motion.p>
               
-              <motion.div variants={fadeIn} className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Button asChild size="lg" className="h-12 w-full px-8 sm:w-auto">
-                  <Link href="/chat">
-                    Ask TMSL AI <MessageSquare className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="h-12 w-full px-8 sm:w-auto">
-                  <Link href="/documents">
-                    Explore Knowledge <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+              {/* Dual Panel Callout Cards */}
+              <motion.div variants={fadeIn} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-10 text-left">
+                {/* Student Panel Portal Card */}
+                <div className="p-6 rounded-2xl border-2 border-blue-500/30 bg-blue-50/40 dark:bg-blue-950/20 hover:border-blue-500 transition-all flex flex-col justify-between shadow-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="p-2.5 rounded-xl bg-blue-600 text-white">
+                        <BookOpen className="h-6 w-6" />
+                      </div>
+                      <Badge className="bg-blue-600 hover:bg-blue-700 text-white">Student Hub</Badge>
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground">Student Panel</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Individual student logins. Access official notices, live campus events, syllabus summaries, and ask the AI assistant.
+                    </p>
+                  </div>
+                  <div className="pt-5 mt-4 border-t border-blue-200 dark:border-blue-900/50 flex gap-2">
+                    <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white">
+                      <Link href="/student">
+                        Enter Student Panel <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/register">Register</Link>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Admin Panel Portal Card */}
+                <div className="p-6 rounded-2xl border-2 border-purple-500/30 bg-purple-50/40 dark:bg-purple-950/20 hover:border-purple-500 transition-all flex flex-col justify-between shadow-sm">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="p-2.5 rounded-xl bg-purple-600 text-white">
+                        <Shield className="h-6 w-6" />
+                      </div>
+                      <Badge className="bg-purple-600 hover:bg-purple-700 text-white">Admin Control</Badge>
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground">Admin Panel</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Publish events with deadlines & venues, upload institutional notices/circulars, and oversee registered students.
+                    </p>
+                  </div>
+                  <div className="pt-5 mt-4 border-t border-purple-200 dark:border-purple-900/50 flex gap-2">
+                    <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                      <Link href="/admin">
+                        Enter Admin Panel <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/login?role=admin">Sign In</Link>
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div variants={fadeIn} className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4 text-emerald-500" /> Individual student email & password
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4 text-emerald-500" /> Admin event publishing feature
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4 text-emerald-500" /> Universal student knowledge visibility
+                </span>
               </motion.div>
             </motion.div>
           </div>
@@ -94,10 +151,10 @@ export default function LandingPage() {
               className="grid gap-8 md:grid-cols-4"
             >
               {[
-                { icon: Upload, title: "1. Upload Documents", desc: "PDFs and text are ingested into the system." },
-                { icon: Cpu, title: "2. AI Processing", desc: "Cortex models chunk and embed text." },
-                { icon: Database, title: "3. Snowflake Storage", desc: "Embeddings stored securely in vector columns." },
-                { icon: MessageSquare, title: "4. Ask & Get Answers", desc: "Natural language answers backed by citations." }
+                { icon: Shield, title: "1. Admin Uploads", desc: "Admins upload notices, syllabus files, and publish upcoming events." },
+                { icon: Cpu, title: "2. AI Vectorization", desc: "Snowflake Cortex models chunk, embed, and index all documents." },
+                { icon: Database, title: "3. Real-Time Storage", desc: "Data is synchronized across Snowflake TABLES & VECTOR stores." },
+                { icon: BookOpen, title: "4. Student Access", desc: "All students get instant visibility, timeline filters, and AI answers." }
               ].map((step, i) => (
                 <motion.div key={i} variants={fadeIn} className="flex flex-col items-center text-center">
                   <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-[#29B5E8] dark:bg-blue-900/30">
@@ -121,8 +178,8 @@ export default function LandingPage() {
               variants={fadeIn}
               className="mb-16 text-center"
             >
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Features</h2>
-              <p className="mt-4 text-lg text-muted-foreground">Everything you need to navigate college life</p>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Platform Capabilities</h2>
+              <p className="mt-4 text-lg text-muted-foreground">Everything students and administrators need</p>
             </motion.div>
 
             <motion.div 
@@ -133,12 +190,12 @@ export default function LandingPage() {
               className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
             >
               {[
-                { icon: MessageSquare, title: "AI Chat Assistant", desc: "Ask complex questions and get grounded answers." },
-                { icon: Search, title: "Smart Search", desc: "Semantic search finds what you mean, not just what you type." },
-                { icon: FileText, title: "Document Management", desc: "Organize institutional knowledge efficiently." },
-                { icon: FileSearch, title: "Notice Summarizer", desc: "Instantly extract key points from long PDF notices." },
-                { icon: Calendar, title: "Event Intelligence", desc: "Auto-extract deadlines and event dates from texts." },
-                { icon: BarChart3, title: "Analytics Dashboard", desc: "Track query trends and popular knowledge areas." }
+                { icon: BookOpen, title: "Student Portal Hub", desc: "Personalized portal with individual student email/password login and saved events." },
+                { icon: Calendar, title: "Admin Event Publishing", desc: "Admins can add new hackathons, workshops, and placement drives with deadlines." },
+                { icon: MessageSquare, title: "AI Chat Assistant", desc: "Ask questions grounded in institutional documents with exact citations." },
+                { icon: Search, title: "Smart Semantic Search", desc: "Find exact circulars and notices based on meaning, not just keywords." },
+                { icon: FileSearch, title: "Notice Summarizer", desc: "Instantly extract key takeaways, required actions, and deadlines from PDFs." },
+                { icon: Shield, title: "Admin Governance", desc: "Manage institutional knowledge, delete obsolete circulars, and view enrolled students." }
               ].map((feat, i) => (
                 <motion.div key={i} variants={fadeIn}>
                   <Card className="h-full transition-shadow hover:shadow-md">

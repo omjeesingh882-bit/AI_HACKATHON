@@ -1,19 +1,23 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Filter, RefreshCw } from 'lucide-react';
+import { Calendar as CalendarIcon, Filter, RefreshCw, Plus } from 'lucide-react';
 import { EventData } from '@/lib/types';
 import { EventCard } from '@/components/event-card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/auth-context';
+import { AddEventDialog } from '@/components/add-event-dialog';
 
 const FILTERS = ["All", "Upcoming", "Hackathon", "Placement", "Workshop", "Academic", "Clubs"];
 
 export default function EventsPage() {
+  const { isAdmin } = useAuth();
   const [events, setEvents] = useState<EventData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
 
   const fetchEvents = async () => {
     setIsLoading(true);
@@ -61,15 +65,25 @@ export default function EventsPage() {
             Live timeline of college events, deadlines, and placement drives stored in Snowflake.
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={fetchEvents}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-3">
+          {isAdmin && (
+            <Button
+              onClick={() => setIsAddEventOpen(true)}
+              className="bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" /> Add Event
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={fetchEvents}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="mb-8 overflow-x-auto pb-2">
@@ -109,6 +123,13 @@ export default function EventsPage() {
           </p>
         </div>
       )}
+
+      {/* Add Event Dialog Modal for Admin */}
+      <AddEventDialog
+        open={isAddEventOpen}
+        onOpenChange={setIsAddEventOpen}
+        onEventCreated={fetchEvents}
+      />
     </div>
   );
 }
