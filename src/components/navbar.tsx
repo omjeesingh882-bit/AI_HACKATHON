@@ -25,18 +25,20 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const { user, role, isAdmin, isStudent, logout } = useAuth();
 
-  // Role-based links: hide panels when not logged in, show student panel only to students, admin panel only to admin
+  // Role-based links: completely hide all navigation links when not logged in
   const links = React.useMemo(() => {
+    if (!user) {
+      return [];
+    }
+
     const items: Array<{ href: string; label: string; icon?: any; highlight?: boolean }> = [
       { href: "/", label: "Home" },
     ];
 
-    if (user) {
-      if (isAdmin) {
-        items.push({ href: "/admin", label: "Admin Panel", icon: Shield, highlight: true });
-      } else if (isStudent) {
-        items.push({ href: "/student", label: "Student Panel", icon: BookOpen, highlight: true });
-      }
+    if (isAdmin) {
+      items.push({ href: "/admin", label: "Admin Panel", icon: Shield, highlight: true });
+    } else if (isStudent) {
+      items.push({ href: "/student", label: "Student Panel", icon: BookOpen, highlight: true });
     }
 
     items.push(
@@ -66,39 +68,43 @@ export function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center space-x-4 text-sm font-medium">
-            {links.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-colors",
-                    pathname === link.href
-                      ? "text-primary font-semibold bg-muted/60"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                  )}
-                >
-                  {Icon && <Icon className="h-3.5 w-3.5" />}
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Desktop Nav Links (Only when logged in) */}
+          {links.length > 0 && (
+            <nav className="hidden lg:flex items-center space-x-4 text-sm font-medium">
+              {links.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-colors",
+                      pathname === link.href
+                        ? "text-primary font-semibold bg-muted/60"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    )}
+                  >
+                    {Icon && <Icon className="h-3.5 w-3.5" />}
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
         </div>
 
-        {/* Mobile menu button */}
-        <button
-          className="inline-flex items-center justify-center rounded-md lg:hidden p-2 text-muted-foreground hover:text-foreground"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        {/* Mobile menu button (Only when logged in and has links) */}
+        {links.length > 0 && (
+          <button
+            className="inline-flex items-center justify-center rounded-md lg:hidden p-2 text-muted-foreground hover:text-foreground"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        )}
 
         {/* Right Side: User Profile & Actions */}
-        <div className="hidden lg:flex items-center space-x-3">
+        <div className="flex items-center space-x-3">
           {user ? (
             <div className="flex items-center gap-3 pl-2 border-l">
               <Link
@@ -170,8 +176,8 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Dropdown Menu */}
-      {isMobileMenuOpen && (
+      {/* Mobile Dropdown Menu (Only when logged in and has links) */}
+      {isMobileMenuOpen && links.length > 0 && (
         <div className="container lg:hidden border-b py-4 bg-background px-4 space-y-3">
           <nav className="flex flex-col space-y-2">
             {links.map((link) => {
@@ -192,38 +198,6 @@ export function Navbar() {
               );
             })}
           </nav>
-
-          <div className="pt-3 border-t flex flex-col gap-2">
-            {user ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-[#29B5E8] text-white flex items-center justify-center font-bold text-xs">
-                    {user.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold">{user.name}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">{user.role} account</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={logout} className="text-xs">
-                  Logout
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    Sign In
-                  </Link>
-                </Button>
-                <Button asChild size="sm" className="w-full bg-[#29B5E8] text-white">
-                  <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                    Register
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </div>
         </div>
       )}
     </header>
