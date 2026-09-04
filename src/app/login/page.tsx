@@ -4,7 +4,7 @@ import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Snowflake, BookOpen, Shield, ArrowRight, Loader2, User, CheckCircle } from 'lucide-react';
+import { Snowflake, BookOpen, Shield, ArrowRight, Loader2, User } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,18 +50,6 @@ function LoginForm() {
     }
   };
 
-  const fillDemoStudent = () => {
-    setEmail('rahul.sharma@tmsl.edu');
-    setPassword('student123');
-    setActiveTab('student');
-  };
-
-  const fillDemoAdmin = () => {
-    setEmail('omjee@tmsl.edu');
-    setPassword('Omjee@123');
-    setActiveTab('admin');
-  };
-
   return (
     <Card className="border-border shadow-lg">
       <CardHeader className="pb-4">
@@ -92,7 +80,7 @@ function LoginForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder={activeTab === 'admin' ? 'admin@tmsl.edu' : 'student@tmsl.edu'}
+                placeholder={activeTab === 'admin' ? 'omjee@tmsl.edu' : 'student@tmsl.edu'}
                 className="pl-9"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -116,36 +104,6 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
-          </div>
-
-          {/* Demo quick credential helper buttons */}
-          <div className="pt-2">
-            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-              <CheckCircle className="h-3 w-3" /> Quick Demo Credentials:
-            </p>
-            <div className="flex gap-2">
-              {activeTab === 'student' ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={fillDemoStudent}
-                  className="text-xs w-full text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/40"
-                >
-                  Fill Student Demo (Rahul)
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={fillDemoAdmin}
-                  className="text-xs w-full text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/40"
-                >
-                  Use Admin Login (Omjee)
-                </Button>
-              )}
             </div>
           </div>
         </CardContent>
