@@ -36,7 +36,7 @@ import { formatDate, formatRelativeDate, getCategoryColor, truncateText } from '
 
 export default function StudentPanelPage() {
   const router = useRouter();
-  const { user, isStudent } = useAuth();
+  const { user, isStudent, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -147,6 +147,33 @@ export default function StudentPanelPage() {
     const matchesCategory = selectedCategory === 'all' || evt.category.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
+
+  if (!authLoading && !user) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+        <Card className="p-8 shadow-xl border-slate-200 dark:border-slate-800">
+          <div className="mx-auto w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center mb-4 text-[#29B5E8]">
+            <BookOpen className="h-7 w-7" />
+          </div>
+          <CardTitle className="text-2xl font-bold mb-2">Student Portal Access</CardTitle>
+          <CardDescription className="text-sm mb-6">
+            Sign in to your student account or create a new one to access your personalized institutional syllabus, notices, campus events, and AI assistant.
+          </CardDescription>
+          <div className="flex flex-col gap-3">
+            <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white font-semibold">
+              <Link href="/login?role=student">Sign In as Student</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/register">Create Student Account</Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full text-xs text-muted-foreground">
+              <Link href="/">Back to Home</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">

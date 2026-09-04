@@ -25,15 +25,29 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const { user, role, isAdmin, isStudent, logout } = useAuth();
 
-  const links = [
-    { href: "/", label: "Home" },
-    { href: "/student", label: "Student Panel", icon: BookOpen, highlight: isStudent },
-    { href: "/admin", label: "Admin Panel", icon: Shield, highlight: isAdmin },
-    { href: "/events", label: "Events" },
-    { href: "/documents", label: "Documents" },
-    { href: "/chat", label: "AI Chat" },
-    { href: "/search", label: "Search" },
-  ];
+  // Role-based links: hide panels when not logged in, show student panel only to students, admin panel only to admin
+  const links = React.useMemo(() => {
+    const items: Array<{ href: string; label: string; icon?: any; highlight?: boolean }> = [
+      { href: "/", label: "Home" },
+    ];
+
+    if (user) {
+      if (isAdmin) {
+        items.push({ href: "/admin", label: "Admin Panel", icon: Shield, highlight: true });
+      } else if (isStudent) {
+        items.push({ href: "/student", label: "Student Panel", icon: BookOpen, highlight: true });
+      }
+    }
+
+    items.push(
+      { href: "/events", label: "Events" },
+      { href: "/documents", label: "Documents" },
+      { href: "/chat", label: "AI Chat" },
+      { href: "/search", label: "Search" }
+    );
+
+    return items;
+  }, [user, isAdmin, isStudent]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

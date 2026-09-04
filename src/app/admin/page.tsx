@@ -134,6 +134,30 @@ export default function AdminPanelPage() {
     (s.rollNumber && s.rollNumber.toLowerCase().includes(studentSearch.toLowerCase()))
   );
 
+  if (!authLoading && !isAdmin) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+        <Card className="p-8 shadow-xl border-slate-200 dark:border-slate-800">
+          <div className="mx-auto w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center mb-4 text-purple-600">
+            <Shield className="h-7 w-7" />
+          </div>
+          <CardTitle className="text-2xl font-bold mb-2">Administrator Access Required</CardTitle>
+          <CardDescription className="text-sm mb-6">
+            This panel is restricted exclusively to administrators. Please sign in with the administrator account to manage institutional events, documents, and students.
+          </CardDescription>
+          <div className="flex flex-col gap-3">
+            <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+              <Link href="/login?role=admin">Sign In as Admin</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/">Back to Home</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header Banner */}
