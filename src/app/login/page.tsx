@@ -80,7 +80,7 @@ function LoginForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder={activeTab === 'admin' ? 'omjee@tmsl.edu' : 'student@tmsl.edu'}
+                placeholder={activeTab === 'admin' ? 'xyz@tmsl.edu' : 'student@tmsl.edu'}
                 className="pl-9"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
