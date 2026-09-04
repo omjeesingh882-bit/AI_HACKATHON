@@ -5,12 +5,13 @@ import { Search as SearchIcon, FileText, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SearchResult } from '@/lib/types';
 import { formatDate, getCategoryColor } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/context/auth-context';
 
 const SUGGESTIONS = [
   "AI workshops",
@@ -22,6 +23,7 @@ const SUGGESTIONS = [
 ];
 
 export default function SearchPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +52,30 @@ export default function SearchPage() {
       setIsLoading(false);
     }
   };
+
+  if (!authLoading && !user) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+        <Card className="p-8 shadow-xl border-slate-200 dark:border-slate-800">
+          <div className="mx-auto w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center mb-4 text-[#29B5E8]">
+            <SearchIcon className="h-7 w-7" />
+          </div>
+          <CardTitle className="text-2xl font-bold mb-2">Sign In Required</CardTitle>
+          <CardDescription className="text-sm mb-6">
+            Please log in to your student or administrator account to perform semantic knowledge search.
+          </CardDescription>
+          <div className="flex flex-col gap-3">
+            <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white font-semibold">
+              <Link href="/login">Sign In</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/register">Student Register</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-12">

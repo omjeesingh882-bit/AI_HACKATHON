@@ -9,9 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
+import { Card, CardTitle, CardDescription } from '@/components/ui/card';
+import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function DocumentsPage() {
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -23,6 +27,7 @@ export default function DocumentsPage() {
   const { toast } = useToast();
 
   const fetchDocuments = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
       const res = await fetch('/api/documents');
@@ -38,8 +43,10 @@ export default function DocumentsPage() {
   };
 
   useEffect(() => {
-    fetchDocuments();
-  }, []);
+    if (user) {
+      fetchDocuments();
+    }
+  }, [user]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -76,6 +83,30 @@ export default function DocumentsPage() {
     const matchesCategory = categoryFilter === 'all' || doc.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+
+  if (!authLoading && !user) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+        <Card className="p-8 shadow-xl border-slate-200 dark:border-slate-800">
+          <div className="mx-auto w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center mb-4 text-purple-600">
+            <Database className="h-7 w-7" />
+          </div>
+          <CardTitle className="text-2xl font-bold mb-2">Sign In Required</CardTitle>
+          <CardDescription className="text-sm mb-6">
+            Please log in to your student or administrator account to browse official institutional documents, syllabus, and notices.
+          </CardDescription>
+          <div className="flex flex-col gap-3">
+            <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white font-semibold">
+              <Link href="/login">Sign In</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/register">Student Register</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl">

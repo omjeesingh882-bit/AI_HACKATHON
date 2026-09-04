@@ -10,16 +10,20 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
 import { AddEventDialog } from '@/components/add-event-dialog';
 
+import Link from 'next/link';
+import { Card, CardTitle, CardDescription } from '@/components/ui/card';
+
 const FILTERS = ["All", "Upcoming", "Hackathon", "Placement", "Workshop", "Academic", "Clubs"];
 
 export default function EventsPage() {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isLoading: authLoading } = useAuth();
   const [events, setEvents] = useState<EventData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
 
   const fetchEvents = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
       let url = '/api/events';
@@ -50,8 +54,34 @@ export default function EventsPage() {
   };
 
   useEffect(() => {
-    fetchEvents();
-  }, [activeFilter]);
+    if (user) {
+      fetchEvents();
+    }
+  }, [activeFilter, user]);
+
+  if (!authLoading && !user) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+        <Card className="p-8 shadow-xl border-slate-200 dark:border-slate-800">
+          <div className="mx-auto w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center mb-4 text-[#29B5E8]">
+            <CalendarIcon className="h-7 w-7" />
+          </div>
+          <CardTitle className="text-2xl font-bold mb-2">Sign In Required</CardTitle>
+          <CardDescription className="text-sm mb-6">
+            Please log in as a student or administrator to view institutional events, hackathons, and placement drives.
+          </CardDescription>
+          <div className="flex flex-col gap-3">
+            <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white font-semibold">
+              <Link href="/login">Sign In</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/register">Student Register</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-6xl">

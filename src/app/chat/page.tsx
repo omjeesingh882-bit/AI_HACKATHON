@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Bot } from 'lucide-react';
+import Link from 'next/link';
+import { Bot, MessageSquare } from 'lucide-react';
 import { ChatMessage as ChatMessageType, QuerySource } from '@/lib/types';
 import { ChatMessage } from '@/components/chat-message';
 import { ChatInput } from '@/components/chat-input';
 import { SuggestedQuestions } from '@/components/suggested-questions';
+import { Card, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/auth-context';
 
 export default function ChatPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const [messages, setMessages] = useState<ChatMessageType[]>([
     {
       id: 'welcome',
@@ -76,6 +81,30 @@ export default function ChatPage() {
       setIsLoading(false);
     }
   };
+
+  if (!authLoading && !user) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+        <Card className="p-8 shadow-xl border-slate-200 dark:border-slate-800">
+          <div className="mx-auto w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center mb-4 text-[#29B5E8]">
+            <MessageSquare className="h-7 w-7" />
+          </div>
+          <CardTitle className="text-2xl font-bold mb-2">Sign In Required</CardTitle>
+          <CardDescription className="text-sm mb-6">
+            Please log in as a student or administrator to query the institutional AI knowledge assistant.
+          </CardDescription>
+          <div className="flex flex-col gap-3">
+            <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white font-semibold">
+              <Link href="/login">Sign In</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/register">Student Register</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">

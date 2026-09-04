@@ -12,6 +12,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Footer } from '@/components/footer';
 
+import { useAuth } from '@/context/auth-context';
+
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
@@ -28,6 +30,8 @@ const staggerContainer = {
 };
 
 export default function LandingPage() {
+  const { user, isAdmin, isStudent } = useAuth();
+
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
@@ -76,14 +80,24 @@ export default function LandingPage() {
                     </p>
                   </div>
                   <div className="pt-5 mt-4 border-t border-blue-200 dark:border-blue-900/50 flex gap-2">
-                    <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white">
-                      <Link href="/student">
-                        Enter Student Panel <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href="/register">Register</Link>
-                    </Button>
+                    {user ? (
+                      <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white">
+                        <Link href="/student">
+                          Enter Student Panel <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <>
+                        <Button asChild className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white">
+                          <Link href="/login?role=student">
+                            Student Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                          <Link href="/register">Register</Link>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -102,14 +116,19 @@ export default function LandingPage() {
                     </p>
                   </div>
                   <div className="pt-5 mt-4 border-t border-purple-200 dark:border-purple-900/50 flex gap-2">
-                    <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                      <Link href="/admin">
-                        Enter Admin Panel <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href="/login?role=admin">Sign In</Link>
-                    </Button>
+                    {isAdmin ? (
+                      <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                        <Link href="/admin">
+                          Enter Admin Panel <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                        <Link href="/login?role=admin">
+                          Admin Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </motion.div>
