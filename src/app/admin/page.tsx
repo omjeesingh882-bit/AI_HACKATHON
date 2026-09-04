@@ -210,7 +210,7 @@ export default function AdminPanelPage() {
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
@@ -244,19 +244,6 @@ export default function AdminPanelPage() {
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Registered Students</p>
-              <h3 className="text-2xl font-bold mt-1">{students.length}</h3>
-              <p className="text-xs text-muted-foreground mt-1">Individual student log-ins</p>
-            </div>
-            <div className="h-12 w-12 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center">
-              <BookOpen className="h-6 w-6" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Snowflake Engine</p>
               <h3 className="text-lg font-bold mt-1 text-[#29B5E8]">TMSL_AI</h3>
               <p className="text-xs text-muted-foreground mt-1">Cortex LLM & RAG active</p>
@@ -281,7 +268,7 @@ export default function AdminPanelPage() {
           </TabsTrigger>
           <TabsTrigger value="students" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Students ({students.length})
+            Students Directory
           </TabsTrigger>
         </TabsList>
 
@@ -472,9 +459,6 @@ export default function AdminPanelPage() {
                 className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border bg-background"
               />
             </div>
-            <Badge variant="secondary" className="text-xs py-1.5 px-3">
-              Total Enrolled Students: {students.length}
-            </Badge>
           </div>
 
           <div className="rounded-xl border overflow-hidden bg-card">
