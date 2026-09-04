@@ -9,6 +9,7 @@ import {
   Calendar,
   FileText,
   Users,
+  User as UserIcon,
   Plus,
   Trash2,
   RefreshCw,
@@ -22,9 +23,13 @@ import {
   Upload,
   Search,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Phone,
+  Mail,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import { EventData, Document, User } from '@/lib/types';
+import { EventData, Document, User, EventRegistration } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -52,6 +57,39 @@ export default function AdminPanelPage() {
   const [eventSearch, setEventSearch] = useState('');
   const [docSearch, setDocSearch] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
+
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [participantsData, setParticipantsData] = useState<
+    Record<string, { registrations: EventRegistration[]; grouped: any[]; count: number }>
+  >({});
+  const [loadingParticipants, setLoadingParticipants] = useState<Record<string, boolean>>({});
+
+  const fetchEventParticipants = async (eventId: string) => {
+    setLoadingParticipants((prev) => ({ ...prev, [eventId]: true }));
+    try {
+      const res = await fetch(`/api/events/${eventId}/registrations`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setParticipantsData((prev) => ({
+          ...prev,
+          [eventId]: data.data,
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to fetch event participants', e);
+    } finally {
+      setLoadingParticipants((prev) => ({ ...prev, [eventId]: false }));
+    }
+  };
+
+  const toggleEventParticipants = (eventId: string) => {
+    if (expandedEventId === eventId) {
+      setExpandedEventId(null);
+    } else {
+      setExpandedEventId(eventId);
+      fetchEventParticipants(eventId);
+    }
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -301,56 +339,265 @@ export default function AdminPanelPage() {
             </div>
           ) : filteredEvents.length > 0 ? (
             <div className="grid gap-4">
-              {filteredEvents.map((event) => (
-                <Card key={event.event_id} className="overflow-hidden hover:border-primary/50 transition-colors">
-                  <CardContent className="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge className={getCategoryColor(event.category)} variant="outline">
-                          {event.category.toUpperCase()}
-                        </Badge>
-                        {event.registration_deadline && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Clock className="mr-1 h-3 w-3" />
-                            Reg Deadline: {formatDate(event.registration_deadline)}
-                          </Badge>
-                        )}
-                      </div>
-                      <h3 className="text-lg font-bold text-foreground">{event.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
-                        <span className="flex items-center gap-1 font-medium text-foreground">
-                          <Calendar className="h-3.5 w-3.5 text-[#29B5E8]" />
-                          {event.event_date ? formatDate(event.event_date) : 'Date TBA'}
-                        </span>
-                        {event.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                            {event.location}
-                          </span>
-                        )}
-                        {event.organizer && (
-                          <span className="flex items-center gap-1">
-                            <Building className="h-3.5 w-3.5 text-muted-foreground" />
-                            {event.organizer}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+              {filteredEvents.map((event) => {
+                const isExpanded = expandedEventId === event.event_id;
+                const pData = participantsData[event.event_id];
+                const isLoadingP = loadingParticipants[event.event_id];
 
-                    <div className="flex items-center gap-2 self-end md:self-center">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteEvent(event.event_id, event.title)}
-                        className="text-xs"
-                      >
-                        <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                return (
+                  <Card key={event.event_id} className="overflow-hidden hover:border-primary/50 transition-colors">
+                    <CardContent className="p-5">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div className="space-y-1.5 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge className={getCategoryColor(event.category)} variant="outline">
+                              {event.category.toUpperCase()}
+                            </Badge>
+                            {event.registration_deadline && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Clock className="mr-1 h-3 w-3" />
+                                Reg Deadline: {formatDate(event.registration_deadline)}
+                              </Badge>
+                            )}
+                          </div>
+                          <h3 className="text-lg font-bold text-foreground">{event.title}</h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
+                            <span className="flex items-center gap-1 font-medium text-foreground">
+                              <Calendar className="h-3.5 w-3.5 text-[#29B5E8]" />
+                              {event.event_date ? formatDate(event.event_date) : 'Date TBA'}
+                            </span>
+                            {event.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                                {event.location}
+                              </span>
+                            )}
+                            {event.organizer && (
+                              <span className="flex items-center gap-1">
+                                <Building className="h-3.5 w-3.5 text-muted-foreground" />
+                                {event.organizer}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end md:self-center">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteEvent(event.event_id, event.title)}
+                            className="text-xs"
+                          >
+                            <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Participant Details Drawer Trigger */}
+                      <div className="flex items-center justify-between pt-3 border-t mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleEventParticipants(event.event_id)}
+                          className={`text-xs flex items-center gap-1.5 font-medium transition-all ${
+                            isExpanded
+                              ? 'bg-blue-100 dark:bg-blue-950 text-[#29B5E8] border-blue-300 dark:border-blue-800'
+                              : 'bg-muted/40 hover:bg-muted text-foreground'
+                          }`}
+                        >
+                          <Users className="h-3.5 w-3.5 text-[#29B5E8]" />
+                          <span>
+                            {isExpanded ? 'Hide Registered Participants' : 'View Registered Participants'}
+                            {pData?.count !== undefined ? ` (${pData.count})` : ''}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp className="h-3.5 w-3.5 ml-1" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                          )}
+                        </Button>
+
+                        {isExpanded && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => fetchEventParticipants(event.event_id)}
+                            disabled={isLoadingP}
+                            className="text-xs h-7 text-muted-foreground hover:text-foreground"
+                          >
+                            <RefreshCw className={`h-3 w-3 mr-1 ${isLoadingP ? 'animate-spin' : ''}`} />
+                            Refresh List
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* EXPANDABLE PARTICIPANT LIST GROUPED BY GROUP NAME */}
+                      {isExpanded && (
+                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-4 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-bold text-sm flex items-center gap-2 text-foreground">
+                                <Users className="h-4 w-4 text-[#29B5E8]" />
+                                Registered Participants (Group-wise Details)
+                              </h4>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Showing all student teams and solo registrations with full contact & roll details.
+                              </p>
+                            </div>
+                          </div>
+
+                          {isLoadingP && !pData ? (
+                            <div className="py-8 text-center text-xs text-muted-foreground">
+                              <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-[#29B5E8]" />
+                              Loading participant registrations...
+                            </div>
+                          ) : !pData || pData.registrations.length === 0 ? (
+                            <div className="py-8 text-center border border-dashed rounded-lg bg-background/50">
+                              <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                              <p className="text-xs font-semibold text-foreground">No registrations recorded yet</p>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">
+                                When students click &quot;Register for Event&quot;, their group or individual details will appear here.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {pData.grouped.map((group, gIdx) => (
+                                <div key={gIdx} className="border rounded-xl bg-background overflow-hidden shadow-sm">
+                                  {/* Group Header Badge */}
+                                  <div
+                                    className={`px-4 py-2.5 flex items-center justify-between border-b ${
+                                      group.isGroup
+                                        ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/60'
+                                        : 'bg-slate-100/70 dark:bg-slate-800/40'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Badge
+                                        variant={group.isGroup ? 'default' : 'secondary'}
+                                        className={
+                                          group.isGroup
+                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold'
+                                            : 'text-xs'
+                                        }
+                                      >
+                                        {group.isGroup ? `👥 ${group.groupName}` : `👤 ${group.groupName}`}
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground font-medium">
+                                        {group.isGroup
+                                          ? `${group.registrations.length} team entry`
+                                          : `${group.registrations.length} individual(s)`}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Group Registrations */}
+                                  <div className="divide-y divide-border">
+                                    {group.registrations.map((reg: EventRegistration) => (
+                                      <div key={reg.registration_id} className="p-4 space-y-3">
+                                        {/* Primary Student / Team Leader Info */}
+                                        <div>
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                              <UserIcon className="h-3.5 w-3.5 text-[#29B5E8]" />
+                                              {reg.participation_type === 'group' ? (
+                                                <span className="text-blue-600 dark:text-blue-400 font-bold">
+                                                  Team Leader / Primary Contact:
+                                                </span>
+                                              ) : (
+                                                <span>Participant Information:</span>
+                                              )}
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground ml-auto">
+                                              Reg Date: {formatDate(reg.registered_at)}
+                                            </span>
+                                          </div>
+
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs bg-muted/25 rounded-lg p-3 border">
+                                            <div>
+                                              <span className="text-muted-foreground block text-[10px]">Full Name</span>
+                                              <span className="font-semibold text-foreground">{reg.full_name}</span>
+                                            </div>
+                                            <div>
+                                              <span className="text-muted-foreground block text-[10px]">College Roll No</span>
+                                              <span className="font-mono font-medium">{reg.roll_number}</span>
+                                            </div>
+                                            <div>
+                                              <span className="text-muted-foreground block text-[10px]">Department</span>
+                                              <span className="truncate block" title={reg.department}>{reg.department}</span>
+                                            </div>
+                                            <div>
+                                              <span className="text-muted-foreground block text-[10px]">Email Address</span>
+                                              <span className="text-blue-600 dark:text-blue-400 font-mono text-[11px] truncate block flex items-center gap-1" title={reg.email}>
+                                                <Mail className="h-3 w-3 shrink-0" /> {reg.email}
+                                              </span>
+                                            </div>
+                                            <div>
+                                              <span className="text-muted-foreground block text-[10px]">Phone Number</span>
+                                              <span className="flex items-center gap-1 font-mono">
+                                                <Phone className="h-3 w-3 text-muted-foreground shrink-0" /> {reg.phone_number}
+                                              </span>
+                                            </div>
+                                            <div>
+                                              <span className="text-muted-foreground block text-[10px]">Gender</span>
+                                              <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4">
+                                                {reg.gender}
+                                              </Badge>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Dynamic Team Members List (If Group) */}
+                                        {reg.participation_type === 'group' && reg.team_members && reg.team_members.length > 0 && (
+                                          <div className="pt-2 border-t border-dashed">
+                                            <div className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                                              <Users className="h-3.5 w-3.5 text-indigo-500" />
+                                              Additional Team Members ({reg.team_members.length})
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                              {reg.team_members.map((member, mIdx) => (
+                                                <div key={mIdx} className="bg-muted/30 border rounded-lg p-2.5 text-xs space-y-1">
+                                                  <div className="flex justify-between items-center">
+                                                    <span className="font-semibold text-foreground">{member.name}</span>
+                                                    <Badge variant="secondary" className="text-[9px] py-0 px-1.5 h-3.5">
+                                                      Member #{mIdx + 1}
+                                                    </Badge>
+                                                  </div>
+                                                  <div className="text-[11px] text-muted-foreground space-y-0.5">
+                                                    <div>
+                                                      <span className="font-medium text-foreground">Roll:</span>{' '}
+                                                      <span className="font-mono">{member.rollNumber}</span>{' '}
+                                                      {member.department && `• ${member.department}`}
+                                                    </div>
+                                                    {member.email && (
+                                                      <div className="text-blue-600 dark:text-blue-400 font-mono text-[10px] truncate flex items-center gap-1">
+                                                        <Mail className="h-2.5 w-2.5 shrink-0" /> {member.email}
+                                                      </div>
+                                                    )}
+                                                    {member.phone && (
+                                                      <div className="flex items-center gap-1">
+                                                        <Phone className="h-2.5 w-2.5 text-muted-foreground shrink-0" /> {member.phone}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-16 border rounded-xl bg-slate-50 dark:bg-slate-900/50">

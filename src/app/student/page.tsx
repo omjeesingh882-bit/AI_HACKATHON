@@ -22,6 +22,7 @@ import {
   Send,
   Loader2,
   Info,
+  Plus,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { EventData, Document } from '@/lib/types';
@@ -33,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDate, formatRelativeDate, getCategoryColor, truncateText } from '@/lib/utils';
+import { EventRegistrationDialog } from '@/components/event-registration-dialog';
 
 export default function StudentPanelPage() {
   const router = useRouter();
@@ -41,6 +43,9 @@ export default function StudentPanelPage() {
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [events, setEvents] = useState<EventData[]>([]);
+  const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([]);
+  const [selectedEventForReg, setSelectedEventForReg] = useState<EventData | null>(null);
+  const [isRegDialogOpen, setIsRegDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState<'notices' | 'events' | 'ai-chat'>('notices');
@@ -53,29 +58,42 @@ export default function StudentPanelPage() {
   const [chatAnswer, setChatAnswer] = useState<string | null>(null);
   const [isAskingAI, setIsAskingAI] = useState(false);
 
-  useEffect(() => {
-    const fetchStudentData = async () => {
-      setIsLoading(true);
-      try {
-        const [docsRes, eventsRes] = await Promise.all([
-          fetch('/api/documents'),
-          fetch('/api/events'),
-        ]);
+  const fetchStudentData = async () => {
+    setIsLoading(true);
+    try {
+      const [docsRes, eventsRes] = await Promise.all([
+        fetch('/api/documents'),
+        fetch('/api/events'),
+      ]);
 
-        const [docsData, eventsData] = await Promise.all([
-          docsRes.json(),
-          eventsRes.json(),
-        ]);
+      const [docsData, eventsData] = await Promise.all([
+        docsRes.json(),
+        eventsRes.json(),
+      ]);
 
-        if (docsData.success) setDocuments(docsData.data || []);
-        if (eventsData.success) setEvents(eventsData.data || []);
-      } catch (e) {
-        console.error('Failed to load student dashboard data', e);
-      } finally {
-        setIsLoading(false);
+      if (docsData.success) setDocuments(docsData.data || []);
+      if (eventsData.success) setEvents(eventsData.data || []);
+    } catch (e) {
+      console.error('Failed to load student dashboard data', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchMyRegistrations = async () => {
+    if (!user?.email) return;
+    try {
+      const res = await fetch(`/api/events/registrations/my?email=${encodeURIComponent(user.email)}`);
+      const data = await res.json();
+      if (data.success && data.data?.registeredEventIds) {
+        setRegisteredEventIds(data.data.registeredEventIds);
       }
-    };
+    } catch (e) {
+      console.error('Failed to fetch my registrations', e);
+    }
+  };
 
+  useEffect(() => {
     fetchStudentData();
 
     // Load saved bookmarks from localStorage
@@ -84,6 +102,12 @@ export default function StudentPanelPage() {
       if (saved) setBookmarkedEvents(JSON.parse(saved));
     } catch (e) {}
   }, []);
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchMyRegistrations();
+    }
+  }, [user]);
 
   const toggleBookmark = (eventId: string, title: string) => {
     let updated: string[];
@@ -413,12 +437,36 @@ export default function StudentPanelPage() {
                       </div>
                     </CardContent>
 
-                    {event.eligibility && (
-                      <CardFooter className="bg-muted/30 py-2.5 px-6 border-t text-[11px] text-muted-foreground">
-                        <span className="font-semibold text-foreground mr-1">Eligibility:</span>
-                        {event.eligibility}
-                      </CardFooter>
-                    )}
+                    <CardFooter className="bg-muted/30 py-3 px-6 border-t flex flex-col gap-2.5">
+                      {event.eligibility && (
+                        <p className="text-[11px] text-muted-foreground w-full">
+                          <span className="font-semibold text-foreground mr-1">Eligibility:</span>
+                          {event.eligibility}
+                        </p>
+                      )}
+                      
+                      <div className="w-full pt-1">
+                        {registeredEventIds.includes(event.event_id) ? (
+                          <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-lg px-3 py-1.5 text-xs text-emerald-700 dark:text-emerald-300 font-semibold">
+                            <span className="flex items-center gap-1.5">
+                              <CheckCircle className="h-4 w-4 text-emerald-500" /> Registered
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">Confirmed ✓</span>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedEventForReg(event);
+                              setIsRegDialogOpen(true);
+                            }}
+                            className="w-full bg-[#29B5E8] hover:bg-[#29B5E8]/90 text-white text-xs font-semibold h-8 shadow-sm"
+                          >
+                            <Plus className="mr-1.5 h-3.5 w-3.5" /> Register for Event
+                          </Button>
+                        )}
+                      </div>
+                    </CardFooter>
                   </Card>
                 );
               })}
@@ -519,6 +567,16 @@ export default function StudentPanelPage() {
           </Card>
         </div>
       )}
+
+      {/* Event Registration Dialog Modal */}
+      <EventRegistrationDialog
+        event={selectedEventForReg}
+        open={isRegDialogOpen}
+        onOpenChange={setIsRegDialogOpen}
+        onRegistered={() => {
+          fetchMyRegistrations();
+        }}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
 import { AddEventDialog } from '@/components/add-event-dialog';
+import { EventRegistrationDialog } from '@/components/event-registration-dialog';
 
 import Link from 'next/link';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
@@ -21,6 +22,9 @@ export default function EventsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([]);
+  const [selectedEventForReg, setSelectedEventForReg] = useState<EventData | null>(null);
+  const [isRegDialogOpen, setIsRegDialogOpen] = useState(false);
 
   const fetchEvents = async () => {
     if (!user) return;
@@ -53,9 +57,23 @@ export default function EventsPage() {
     }
   };
 
+  const fetchMyRegistrations = async () => {
+    if (!user?.email) return;
+    try {
+      const res = await fetch(`/api/events/registrations/my?email=${encodeURIComponent(user.email)}`);
+      const data = await res.json();
+      if (data.success && data.data?.registeredEventIds) {
+        setRegisteredEventIds(data.data.registeredEventIds);
+      }
+    } catch (e) {
+      console.error("Failed to fetch my registrations", e);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchEvents();
+      fetchMyRegistrations();
     }
   }, [activeFilter, user]);
 
@@ -141,7 +159,15 @@ export default function EventsPage() {
       ) : events.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {events.map(event => (
-            <EventCard key={event.event_id} event={event} />
+            <EventCard 
+              key={event.event_id} 
+              event={event}
+              isRegistered={registeredEventIds.includes(event.event_id)}
+              onRegisterClick={!isAdmin ? (ev) => {
+                setSelectedEventForReg(ev);
+                setIsRegDialogOpen(true);
+              } : undefined}
+            />
           ))}
         </div>
       ) : (
@@ -159,6 +185,16 @@ export default function EventsPage() {
         open={isAddEventOpen}
         onOpenChange={setIsAddEventOpen}
         onEventCreated={fetchEvents}
+      />
+
+      {/* Event Registration Dialog for Students */}
+      <EventRegistrationDialog
+        event={selectedEventForReg}
+        open={isRegDialogOpen}
+        onOpenChange={setIsRegDialogOpen}
+        onRegistered={() => {
+          fetchMyRegistrations();
+        }}
       />
     </div>
   );

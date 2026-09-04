@@ -60,6 +60,8 @@ declare module 'lucide-react' {
   export const BookOpen: LucideIcon;
   export const Terminal: LucideIcon;
   export const RefreshCw: LucideIcon;
+  export const Phone: LucideIcon;
+  export const Mail: LucideIcon;
 
   const icons: Record<string, LucideIcon>;
   export default icons;

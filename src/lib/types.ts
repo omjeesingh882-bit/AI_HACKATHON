@@ -131,6 +131,44 @@ export interface CreateEventRequest {
   eligibility: string;
 }
 
+export interface TeamMember {
+  name: string;
+  rollNumber: string;
+  email: string;
+  phone?: string;
+  department?: string;
+}
+
+export interface EventRegistration {
+  registration_id: string;
+  event_id: string;
+  event_title: string;
+  student_id: string;
+  full_name: string;
+  roll_number: string;
+  department: string;
+  phone_number: string;
+  gender: 'Male' | 'Female' | 'Other';
+  email: string;
+  participation_type: 'individual' | 'group';
+  group_name?: string;
+  team_members?: TeamMember[];
+  registered_at: string;
+}
+
+export interface CreateEventRegistrationRequest {
+  event_id: string;
+  full_name: string;
+  roll_number: string;
+  department: string;
+  phone_number: string;
+  gender: 'Male' | 'Female' | 'Other';
+  email: string;
+  participation_type: 'individual' | 'group';
+  group_name?: string;
+  team_members?: TeamMember[];
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
