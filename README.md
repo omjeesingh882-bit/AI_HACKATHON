@@ -370,9 +370,12 @@ Live production deployment: **[https://ai-hackathon-blush.vercel.app/](https://a
 
 ---
 
-## 👥 Team & Acknowledgements
+## 👥 Team & Contributors
 
-* **Developed by**: TMSL AI Engineering Team
+* **Contributors**:
+  * [Omjee Singh](https://github.com/omjeesingh882-bit)
+  * [Mehar12373](https://github.com/Mehar12373) - `meharaliya24@gmail.com`
+* **Team**: TMSL AI Engineering Team
 * **Submitted to**: **MLH Hack Days 2026**
 * **Challenge Track**: **Best Use of Snowflake**
 * **Institution**: Techno Main Salt Lake (TMSL), Kolkata

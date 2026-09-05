@@ -2,6 +2,13 @@
   "name": "tmsl-ai",
   "version": "1.0.0",
   "private": true,
+  "contributors": [
+    {
+      "name": "Mehar12373",
+      "email": "meharaliya24@gmail.com",
+      "url": "https://github.com/Mehar12373"
+    }
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
